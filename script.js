@@ -1,5 +1,9 @@
 const searchForm = document.getElementById("searchForm");
 const cityInput = document.getElementById("cityInput");
+const geoButton = document.getElementById("geoButton");
+const favoriteButton = document.getElementById("favoriteButton");
+const celsiusBtn = document.getElementById("celsiusBtn");
+const fahrenheitBtn = document.getElementById("fahrenheitBtn");
 
 const locationName = document.getElementById("locationName");
 const currentTemp = document.getElementById("currentTemp");
@@ -17,6 +21,15 @@ const scene = document.getElementById("scene");
 const sceneEffects = document.getElementById("sceneEffects");
 const outfitLayer = document.getElementById("outfitLayer");
 const propLayer = document.getElementById("propLayer");
+const sunOrMoon = document.getElementById("sunOrMoon");
+const cloudLayer = document.getElementById("cloudLayer");
+
+const recentCitiesEl = document.getElementById("recentCities");
+const favoriteCityEl = document.getElementById("favoriteCity");
+
+let latestWeatherData = null;
+let latestCityName = "Malmö";
+let tempUnit = localStorage.getItem("weatherTempUnit") || "c";
 
 const weatherCodeMap = {
   0: { label: "Clear sky", icon: "☀️" },
@@ -47,6 +60,20 @@ function getWeatherInfo(code) {
   return weatherCodeMap[code] || { label: "Unknown", icon: "🌍" };
 }
 
+function cToF(c) {
+  return (c * 9) / 5 + 32;
+}
+
+function formatTemp(valueC) {
+  const value = tempUnit === "f" ? cToF(valueC) : valueC;
+  return `${Math.round(value)}°${tempUnit === "f" ? "F" : "C"}`;
+}
+
+function setUnitButtons() {
+  celsiusBtn.classList.toggle("active", tempUnit === "c");
+  fahrenheitBtn.classList.toggle("active", tempUnit === "f");
+}
+
 function getSeason(monthIndex) {
   if ([11, 0, 1].includes(monthIndex)) return "winter";
   if ([2, 3, 4].includes(monthIndex)) return "spring";
@@ -54,76 +81,89 @@ function getSeason(monthIndex) {
   return "autumn";
 }
 
-function getSceneState({ weatherCode, temperature, windSpeed, monthIndex }) {
+function isNightBySun(currentTimeStr, sunriseStr, sunsetStr) {
+  const current = new Date(currentTimeStr);
+  const sunrise = new Date(sunriseStr);
+  const sunset = new Date(sunsetStr);
+  return current < sunrise || current > sunset;
+}
+
+function getSceneState({ weatherCode, temperature, windSpeed, monthIndex, night }) {
   const season = getSeason(monthIndex);
   const isSnow = [71, 73, 75, 77, 85, 86].includes(weatherCode);
   const isRain = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(weatherCode);
+  const cloudy = [1, 2, 3, 45, 48].includes(weatherCode);
   const windy = windSpeed >= 20;
 
+  let state = {
+    sceneClass: season,
+    outfitClass: `${season}-outfit`,
+    label: `${season.charAt(0).toUpperCase() + season.slice(1)} teddy walk`,
+    prop: season === "summer" ? "🍦" : season === "spring" ? "🍬" : season === "autumn" ? "🧶" : "🧥",
+    effect: season === "winter" ? "snow" : season === "autumn" ? "leaves" : "sparkles",
+    night,
+    skyIcon: night ? "🌙" : "☀️",
+    clouds: cloudy || isRain,
+  };
+
   if (isSnow) {
-    return {
+    state = {
       sceneClass: "winter",
       outfitClass: "winter-outfit",
       label: "Winter snow walk",
       prop: "🧥",
       effect: "snow",
+      night,
+      skyIcon: night ? "🌙" : "❄️",
+      clouds: true,
     };
-  }
-
-  if (season === "autumn" && windy) {
-    return {
+  } else if (season === "autumn" && windy) {
+    state = {
       sceneClass: "autumn",
       outfitClass: "autumn-outfit",
       label: "Windy autumn walk",
       prop: "🧶",
       effect: "leaves",
+      night,
+      skyIcon: night ? "🌙" : "🌤️",
+      clouds: true,
     };
-  }
-
-  if (isRain) {
-    return {
+  } else if (isRain) {
+    state = {
       sceneClass: "rainy",
       outfitClass: "rainy-outfit",
       label: "Rainy day walk",
       prop: "☔",
       effect: "rain",
+      night,
+      skyIcon: night ? "🌙" : "🌧️",
+      clouds: true,
     };
-  }
-
-  if (season === "spring") {
-    return {
+  } else if (season === "spring") {
+    state = {
       sceneClass: "spring",
       outfitClass: "spring-outfit",
       label: "Spring candy walk",
       prop: "🍬",
       effect: "sparkles",
+      night,
+      skyIcon: night ? "🌙" : "🌤️",
+      clouds: cloudy,
     };
-  }
-
-  if (season === "summer" && temperature >= 22) {
-    return {
+  } else if (season === "summer" && temperature >= 22) {
+    state = {
       sceneClass: "summer",
       outfitClass: "summer-outfit",
       label: "Summer ice cream walk",
       prop: "🍦",
       effect: "sparkles",
+      night,
+      skyIcon: night ? "🌙" : "☀️",
+      clouds: cloudy,
     };
   }
 
-  const defaults = {
-    winter: { outfitClass: "winter-outfit", prop: "🧥", effect: "snow" },
-    spring: { outfitClass: "spring-outfit", prop: "🍬", effect: "sparkles" },
-    summer: { outfitClass: "summer-outfit", prop: "🍦", effect: "sparkles" },
-    autumn: { outfitClass: "autumn-outfit", prop: "🧶", effect: "leaves" },
-  };
-
-  return {
-    sceneClass: season,
-    outfitClass: defaults[season].outfitClass,
-    label: `${season.charAt(0).toUpperCase() + season.slice(1)} teddy walk`,
-    prop: defaults[season].prop,
-    effect: defaults[season].effect,
-  };
+  return state;
 }
 
 function renderEffects(type) {
@@ -148,6 +188,31 @@ function renderEffects(type) {
   if (type === "sparkles") createItem("✨", "sparkle", 8);
 }
 
+function renderClouds(showClouds) {
+  cloudLayer.innerHTML = "";
+  if (!showClouds) return;
+
+  for (let i = 0; i < 3; i++) {
+    const cloud = document.createElement("div");
+    cloud.className = "cloud";
+    cloud.textContent = "☁️";
+    cloud.style.left = `${15 + i * 25}%`;
+    cloud.style.top = `${20 + (i % 2) * 18}px`;
+    cloud.style.animationDuration = `${7 + i * 2}s`;
+    cloudLayer.appendChild(cloud);
+  }
+}
+
+function applyTeddyScene(sceneState) {
+  scene.className = `scene ${sceneState.sceneClass}${sceneState.night ? " night" : ""}`;
+  outfitLayer.className = `outfit ${sceneState.outfitClass}`;
+  propLayer.textContent = sceneState.prop;
+  sceneLabel.textContent = sceneState.label + (sceneState.night ? " • Night" : " • Day");
+  sunOrMoon.textContent = sceneState.skyIcon;
+  renderClouds(sceneState.clouds);
+  renderEffects(sceneState.effect);
+}
+
 function formatHourLabel(timeString) {
   const date = new Date(timeString);
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -156,6 +221,57 @@ function formatHourLabel(timeString) {
 function formatDayLabel(timeString) {
   const date = new Date(timeString);
   return date.toLocaleDateString([], { weekday: "short" });
+}
+
+function getDailyIndexFromDate(dateStr) {
+  if (!latestWeatherData) return 0;
+  return latestWeatherData.daily.time.findIndex((d) => d === dateStr);
+}
+
+function previewHour(index) {
+  if (!latestWeatherData) return;
+
+  const time = latestWeatherData.hourly.time[index];
+  const temp = latestWeatherData.hourly.temperature_2m[index];
+  const code = latestWeatherData.hourly.weather_code[index];
+  const wind = latestWeatherData.hourly.wind_speed_10m[index];
+  const dayStr = time.split("T")[0];
+  const dailyIndex = getDailyIndexFromDate(dayStr);
+  const sunrise = latestWeatherData.daily.sunrise[dailyIndex];
+  const sunset = latestWeatherData.daily.sunset[dailyIndex];
+  const date = new Date(time);
+
+  const sceneState = getSceneState({
+    weatherCode: code,
+    temperature: temp,
+    windSpeed: wind,
+    monthIndex: date.getMonth(),
+    night: isNightBySun(time, sunrise, sunset),
+  });
+
+  applyTeddyScene(sceneState);
+}
+
+function previewDay(dayIndex) {
+  if (!latestWeatherData) return;
+
+  const dayTime = latestWeatherData.daily.time[dayIndex] + "T12:00";
+  const code = latestWeatherData.daily.weather_code[dayIndex];
+  const temp = latestWeatherData.daily.temperature_2m_max[dayIndex];
+  const wind = latestWeatherData.daily.wind_speed_10m_max[dayIndex];
+  const sunrise = latestWeatherData.daily.sunrise[dayIndex];
+  const sunset = latestWeatherData.daily.sunset[dayIndex];
+  const date = new Date(dayTime);
+
+  const sceneState = getSceneState({
+    weatherCode: code,
+    temperature: temp,
+    windSpeed: wind,
+    monthIndex: date.getMonth(),
+    night: isNightBySun(dayTime, sunrise, sunset),
+  });
+
+  applyTeddyScene(sceneState);
 }
 
 function renderHourly(data) {
@@ -169,16 +285,27 @@ function renderHourly(data) {
     const code = data.hourly.weather_code[index];
     const info = getWeatherInfo(code);
 
-    const card = document.createElement("div");
+    const card = document.createElement("button");
     card.className = "hour-card";
+    card.type = "button";
     card.innerHTML = `
       <p class="forecast-time">${formatHourLabel(time)}</p>
       <p class="forecast-icon">${info.icon}</p>
       <p>${info.label}</p>
-      <p class="forecast-temp">${Math.round(temp)}°C</p>
+      <p class="forecast-temp">${formatTemp(temp)}</p>
     `;
+
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".hour-card").forEach((c) => c.classList.remove("active-hour"));
+      card.classList.add("active-hour");
+      previewHour(index);
+    });
+
     hourlyForecast.appendChild(card);
   });
+
+  const firstHourCard = hourlyForecast.querySelector(".hour-card");
+  if (firstHourCard) firstHourCard.classList.add("active-hour");
 }
 
 function renderDaily(data) {
@@ -190,14 +317,22 @@ function renderDaily(data) {
     const code = data.daily.weather_code[index];
     const info = getWeatherInfo(code);
 
-    const card = document.createElement("div");
+    const card = document.createElement("button");
     card.className = "day-card";
+    card.type = "button";
     card.innerHTML = `
       <p class="forecast-day">${formatDayLabel(day)}</p>
       <p class="forecast-icon">${info.icon}</p>
       <p>${info.label}</p>
-      <p class="forecast-temp">${Math.round(max)}° / ${Math.round(min)}°</p>
+      <p class="forecast-temp">${formatTemp(max)} / ${formatTemp(min)}</p>
     `;
+
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".day-card").forEach((c) => c.classList.remove("active-day"));
+      card.classList.add("active-day");
+      previewDay(index);
+    });
+
     dailyForecast.appendChild(card);
   });
 }
@@ -207,28 +342,104 @@ function renderCurrent(data, cityName) {
   const code = data.hourly.weather_code[currentIndex];
   const temp = data.hourly.temperature_2m[currentIndex];
   const wind = data.hourly.wind_speed_10m[currentIndex];
+  const time = data.hourly.time[currentIndex];
   const info = getWeatherInfo(code);
+  const date = new Date(time);
+  const sunrise = data.daily.sunrise[0];
+  const sunset = data.daily.sunset[0];
 
   locationName.textContent = cityName;
-  currentTemp.textContent = `${Math.round(temp)}°C`;
+  currentTemp.textContent = formatTemp(temp);
   currentCondition.textContent = info.label;
   currentIcon.textContent = info.icon;
-  todayHigh.textContent = `${Math.round(data.daily.temperature_2m_max[0])}°C`;
-  todayLow.textContent = `${Math.round(data.daily.temperature_2m_min[0])}°C`;
+  todayHigh.textContent = formatTemp(data.daily.temperature_2m_max[0]);
+  todayLow.textContent = formatTemp(data.daily.temperature_2m_min[0]);
   currentWind.textContent = `${Math.round(wind)} km/h`;
 
-  const teddyState = getSceneState({
+  const sceneState = getSceneState({
     weatherCode: code,
     temperature: temp,
     windSpeed: wind,
-    monthIndex: new Date().getMonth(),
+    monthIndex: date.getMonth(),
+    night: isNightBySun(time, sunrise, sunset),
   });
 
-  scene.className = `scene ${teddyState.sceneClass}`;
-  outfitLayer.className = `outfit ${teddyState.outfitClass}`;
-  propLayer.textContent = teddyState.prop;
-  sceneLabel.textContent = teddyState.label;
-  renderEffects(teddyState.effect);
+  applyTeddyScene(sceneState);
+}
+
+function setLoadingState() {
+  locationName.textContent = "Loading...";
+  currentCondition.textContent = "Fetching weather...";
+  currentTemp.textContent = "--°";
+  currentIcon.textContent = "⏳";
+  todayHigh.textContent = "--";
+  todayLow.textContent = "--";
+  currentWind.textContent = "--";
+  sceneLabel.textContent = "Loading scene...";
+  hourlyForecast.innerHTML = `
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  `;
+  dailyForecast.innerHTML = `
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  `;
+}
+
+function addRecentCity(city) {
+  let cities = JSON.parse(localStorage.getItem("recentWeatherCities") || "[]");
+  cities = cities.filter((c) => c !== city);
+  cities.unshift(city);
+  cities = cities.slice(0, 5);
+  localStorage.setItem("recentWeatherCities", JSON.stringify(cities));
+  renderRecentCities();
+}
+
+function renderRecentCities() {
+  const cities = JSON.parse(localStorage.getItem("recentWeatherCities") || "[]");
+  if (!cities.length) {
+    recentCitiesEl.innerHTML = `<span class="empty-inline">No recent cities yet.</span>`;
+    return;
+  }
+
+  recentCitiesEl.innerHTML = "";
+  cities.forEach((city) => {
+    const btn = document.createElement("button");
+    btn.className = "city-chip";
+    btn.textContent = city;
+    btn.addEventListener("click", () => {
+      cityInput.value = city;
+      loadWeather(city);
+    });
+    recentCitiesEl.appendChild(btn);
+  });
+}
+
+function saveFavoriteCity(city) {
+  localStorage.setItem("favoriteWeatherCity", city);
+  renderFavoriteCity();
+}
+
+function renderFavoriteCity() {
+  const city = localStorage.getItem("favoriteWeatherCity");
+  if (!city) {
+    favoriteCityEl.innerHTML = `<span class="empty-inline">No favorite saved yet.</span>`;
+    return;
+  }
+
+  favoriteCityEl.innerHTML = "";
+  const btn = document.createElement("button");
+  btn.className = "city-chip";
+  btn.textContent = city;
+  btn.addEventListener("click", () => {
+    cityInput.value = city;
+    loadWeather(city);
+  });
+  favoriteCityEl.appendChild(btn);
 }
 
 async function getCoordinates(city) {
@@ -252,7 +463,7 @@ async function getWeather(lat, lon) {
   const weatherUrl =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&hourly=temperature_2m,weather_code,wind_speed_10m` +
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,sunrise,sunset` +
     `&forecast_days=7&timezone=auto`;
 
   const response = await fetch(weatherUrl);
@@ -261,10 +472,16 @@ async function getWeather(lat, lon) {
 
 async function loadWeather(city) {
   try {
-    locationName.textContent = "Loading...";
-    currentCondition.textContent = "Loading...";
+    setLoadingState();
+
     const coords = await getCoordinates(city);
     const weatherData = await getWeather(coords.latitude, coords.longitude);
+
+    latestWeatherData = weatherData;
+    latestCityName = coords.name;
+
+    addRecentCity(coords.name);
+    localStorage.setItem("lastWeatherCity", city);
 
     renderCurrent(weatherData, coords.name);
     renderHourly(weatherData);
@@ -272,9 +489,39 @@ async function loadWeather(city) {
   } catch (error) {
     locationName.textContent = "Error";
     currentCondition.textContent = error.message;
-    hourlyForecast.innerHTML = `<p>${error.message}</p>`;
+    currentIcon.textContent = "⚠️";
+    hourlyForecast.innerHTML = `<div class="loading-box">${error.message}</div>`;
     dailyForecast.innerHTML = "";
   }
+}
+
+async function loadWeatherByCoords(lat, lon, displayName = "Your Location") {
+  try {
+    setLoadingState();
+
+    const weatherData = await getWeather(lat, lon);
+    latestWeatherData = weatherData;
+    latestCityName = displayName;
+
+    addRecentCity(displayName);
+
+    renderCurrent(weatherData, displayName);
+    renderHourly(weatherData);
+    renderDaily(weatherData);
+  } catch (error) {
+    locationName.textContent = "Error";
+    currentCondition.textContent = error.message;
+    currentIcon.textContent = "⚠️";
+    hourlyForecast.innerHTML = `<div class="loading-box">${error.message}</div>`;
+    dailyForecast.innerHTML = "";
+  }
+}
+
+function rerenderAll() {
+  if (!latestWeatherData) return;
+  renderCurrent(latestWeatherData, latestCityName);
+  renderHourly(latestWeatherData);
+  renderDaily(latestWeatherData);
 }
 
 searchForm.addEventListener("submit", (e) => {
@@ -283,4 +530,47 @@ searchForm.addEventListener("submit", (e) => {
   if (city) loadWeather(city);
 });
 
-loadWeather("Malmö");
+geoButton.addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    currentCondition.textContent = "Geolocation is not supported in this browser.";
+    return;
+  }
+
+  currentCondition.textContent = "Getting your location...";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      loadWeatherByCoords(latitude, longitude, "Your Location");
+    },
+    () => {
+      currentCondition.textContent = "Unable to get your location.";
+    }
+  );
+});
+
+favoriteButton.addEventListener("click", () => {
+  if (latestCityName) saveFavoriteCity(latestCityName);
+});
+
+celsiusBtn.addEventListener("click", () => {
+  tempUnit = "c";
+  localStorage.setItem("weatherTempUnit", tempUnit);
+  setUnitButtons();
+  rerenderAll();
+});
+
+fahrenheitBtn.addEventListener("click", () => {
+  tempUnit = "f";
+  localStorage.setItem("weatherTempUnit", tempUnit);
+  setUnitButtons();
+  rerenderAll();
+});
+
+setUnitButtons();
+renderRecentCities();
+renderFavoriteCity();
+
+const savedCity = localStorage.getItem("lastWeatherCity") || "Malmö";
+cityInput.value = savedCity;
+loadWeather(savedCity);
