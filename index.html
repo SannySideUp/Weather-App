@@ -19,12 +19,36 @@
       </div>
 
       <form id="searchForm" class="search-box">
-        <input type="text" id="cityInput" placeholder="Search city..." value="Malmö" />
-        <button type="submit">Search</button>
-      </form>
+  <input type="text" id="cityInput" placeholder="Search city..." value="" />
+  <button type="submit">Search</button>
+  <button type="button" id="geoButton" class="secondary-btn">Use My Location</button>
+  <button type="button" id="favoriteButton" class="secondary-btn">☆ Save Favorite</button>
+</form>
     </header>
 
     <main class="dashboard">
+      <section class="utility-row">
+  <div class="utility-card">
+    <p class="section-label">Favorite City</p>
+    <div id="favoriteCity" class="utility-list empty-inline">No favorite saved yet.</div>
+  </div>
+
+  <div class="utility-card">
+    <p class="section-label">Recent Cities</p>
+    <div id="recentCities" class="utility-list empty-inline">No recent cities yet.</div>
+  </div>
+
+  <div class="utility-card settings-card">
+    <p class="section-label">Settings</p>
+    <div class="settings-row">
+      <span>Temperature Unit</span>
+      <div class="toggle-group">
+        <button type="button" id="celsiusBtn" class="toggle-btn active">°C</button>
+        <button type="button" id="fahrenheitBtn" class="toggle-btn">°F</button>
+      </div>
+    </div>
+  </div>
+</section>
       <section class="card current-card">
         <div class="card-top">
           <div>
