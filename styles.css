@@ -97,12 +97,24 @@ body {
   box-shadow: var(--shadow);
 }
 
-.dashboard {
+.secondary-btn {
+  border: 1px solid var(--line) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.utility-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px;
+  margin-bottom: 22px;
 }
 
+.utility-card,
 .card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -110,6 +122,36 @@ body {
   box-shadow: var(--shadow);
   padding: 22px;
   backdrop-filter: blur(12px);
+}
+
+.utility-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.city-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.city-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.empty-inline {
+  color: var(--muted);
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
 }
 
 .wide-card {
@@ -190,32 +232,64 @@ body {
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid var(--line);
+  transition: background 0.45s ease, filter 0.45s ease;
 }
 
 .scene.summer {
   background: linear-gradient(to top, #1f7c50 0%, #6fd1ff 55%, #cbf4ff 100%);
 }
-
 .scene.spring {
   background: linear-gradient(to top, #48a86a 0%, #b0efb9 45%, #dffcff 100%);
 }
-
 .scene.autumn {
   background: linear-gradient(to top, #7f4f31 0%, #cf8743 40%, #c8daf8 100%);
 }
-
 .scene.winter {
   background: linear-gradient(to top, #e4efff 0%, #b2ddff 45%, #f6fbff 100%);
 }
-
 .scene.rainy {
   background: linear-gradient(to top, #495d77 0%, #6e7f99 40%, #adb8cb 100%);
+}
+
+.scene.night {
+  filter: brightness(0.78) saturate(0.95);
+}
+
+.sky-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sun-or-moon {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  font-size: 1.8rem;
+  z-index: 3;
+  transition: transform 0.3s ease;
+}
+
+.cloud-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.cloud {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0.7;
+  animation: cloudDrift linear infinite;
 }
 
 .sky-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom, rgba(255,255,255,0.08), transparent 45%);
+}
+
+.scene.night .sky-overlay {
+  background: linear-gradient(to bottom, rgba(16, 28, 60, 0.35), rgba(5, 10, 20, 0.08));
 }
 
 .ground {
@@ -419,27 +493,14 @@ body {
   height: 52px;
   border-radius: 18px 18px 14px 14px;
   z-index: 4;
+  transition: background 0.35s ease;
 }
 
-.summer-outfit {
-  background: linear-gradient(180deg, #f8d665, #f0a43f);
-}
-
-.spring-outfit {
-  background: linear-gradient(180deg, #ff93c3, #ffa9f0);
-}
-
-.autumn-outfit {
-  background: linear-gradient(180deg, #e58f52, #8e4d31);
-}
-
-.winter-outfit {
-  background: linear-gradient(180deg, #6e8dd8, #455b9c);
-}
-
-.rainy-outfit {
-  background: linear-gradient(180deg, #4b6b96, #334a6d);
-}
+.summer-outfit { background: linear-gradient(180deg, #f8d665, #f0a43f); }
+.spring-outfit { background: linear-gradient(180deg, #ff93c3, #ffa9f0); }
+.autumn-outfit { background: linear-gradient(180deg, #e58f52, #8e4d31); }
+.winter-outfit { background: linear-gradient(180deg, #6e8dd8, #455b9c); }
+.rainy-outfit { background: linear-gradient(180deg, #4b6b96, #334a6d); }
 
 .prop-layer {
   position: absolute;
@@ -469,6 +530,21 @@ body {
   border-radius: 18px;
   padding: 14px;
   text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  color: var(--text);
+}
+
+.hour-card:hover,
+.day-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(120, 166, 255, 0.35);
+}
+
+.active-hour,
+.active-day {
+  outline: 2px solid rgba(120, 166, 255, 0.7);
+  background: rgba(120, 166, 255, 0.12);
 }
 
 .hour-card p,
@@ -488,6 +564,16 @@ body {
 
 .forecast-temp {
   font-weight: 700;
+}
+
+.loading-box {
+  width: 100%;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(24, 36, 59, 0.75);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  text-align: center;
 }
 
 @keyframes teddyMove {
@@ -527,6 +613,11 @@ body {
   100% { transform: translateY(340px) translateX(22px); opacity: 0; }
 }
 
+@keyframes cloudDrift {
+  0% { transform: translateX(-30px); }
+  100% { transform: translateX(30px); }
+}
+
 @media (max-width: 920px) {
   .hero,
   .current-content {
@@ -534,6 +625,7 @@ body {
     align-items: start;
   }
 
+  .utility-row,
   .dashboard {
     grid-template-columns: 1fr;
   }
