@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teddy Weather App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Creative Weather App</p>
+        <h1>Teddy Weather</h1>
+        <p class="subtitle">
+          A weather app that shows today's hourly forecast, the next 7 days,
+          and a walking teddy bear scene that changes with weather and season.
+        </p>
+      </div>
+
+      <form id="searchForm" class="search-box">
+        <input type="text" id="cityInput" placeholder="Search city..." value="Malmö" />
+        <button type="submit">Search</button>
+      </form>
+    </header>
+
+    <main class="dashboard">
+      <section class="card current-card">
+        <div class="card-top">
+          <div>
+            <p class="section-label">Current</p>
+            <h2 id="locationName">Loading...</h2>
+          </div>
+          <div class="current-badge" id="currentCondition">--</div>
+        </div>
+
+        <div class="current-content">
+          <div class="temp-block">
+            <div class="big-temp" id="currentTemp">--°C</div>
+            <div class="weather-icon" id="currentIcon">☀️</div>
+          </div>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span>High</span>
+              <strong id="todayHigh">--</strong>
+            </div>
+            <div class="meta-item">
+              <span>Low</span>
+              <strong id="todayLow">--</strong>
+            </div>
+            <div class="meta-item">
+              <span>Wind</span>
+              <strong id="currentWind">--</strong>
+            </div>
+            <div class="meta-item">
+              <span>Scene</span>
+              <strong id="sceneLabel">--</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card teddy-card">
+        <div class="card-top">
+          <div>
+            <p class="section-label">Animated Scene</p>
+            <h2>Teddy Walk</h2>
+          </div>
+        </div>
+
+        <div id="scene" class="scene summer">
+          <div class="sky-overlay"></div>
+          <div id="sceneEffects" class="scene-effects"></div>
+          <div class="ground"></div>
+
+          <div class="teddy-stage">
+            <div class="teddy-character" id="teddyCharacter">
+              <div class="teddy-ears">
+                <span class="ear left"></span>
+                <span class="ear right"></span>
+              </div>
+
+              <div class="teddy-head">
+                <span class="inner-ear left"></span>
+                <span class="inner-ear right"></span>
+                <span class="eye left"></span>
+                <span class="eye right"></span>
+                <span class="snout"></span>
+                <span class="nose"></span>
+              </div>
+
+              <div class="teddy-body">
+                <span class="arm left"></span>
+                <span class="arm right"></span>
+                <span class="belly"></span>
+                <span class="leg left"></span>
+                <span class="leg right"></span>
+
+                <div id="outfitLayer" class="outfit summer-outfit"></div>
+              </div>
+
+              <div id="propLayer" class="prop-layer summer-prop">🍦</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card wide-card">
+        <div class="card-top">
+          <div>
+            <p class="section-label">Today</p>
+            <h2>Hourly Forecast</h2>
+          </div>
+        </div>
+        <div id="hourlyForecast" class="hourly-grid"></div>
+      </section>
+
+      <section class="card wide-card">
+        <div class="card-top">
+          <div>
+            <p class="section-label">Forecast</p>
+            <h2>Next 7 Days</h2>
+          </div>
+        </div>
+        <div id="dailyForecast" class="daily-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
