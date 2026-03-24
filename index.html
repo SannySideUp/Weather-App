@@ -13,42 +13,43 @@
         <p class="eyebrow">Creative Weather App</p>
         <h1>Teddy Weather</h1>
         <p class="subtitle">
-          A weather app that shows today's hourly forecast, the next 7 days,
-          and a walking teddy bear scene that changes with weather and season.
+          A weather app with hourly and 7-day forecasts, interactive teddy scene previews,
+          geolocation, recent cities, favorite city saving, and unit switching.
         </p>
       </div>
 
       <form id="searchForm" class="search-box">
-  <input type="text" id="cityInput" placeholder="Search city..." value="" />
-  <button type="submit">Search</button>
-  <button type="button" id="geoButton" class="secondary-btn">Use My Location</button>
-  <button type="button" id="favoriteButton" class="secondary-btn">☆ Save Favorite</button>
-</form>
+        <input type="text" id="cityInput" placeholder="Search city..." value="Malmö" />
+        <button type="submit">Search</button>
+        <button type="button" id="geoButton" class="secondary-btn">Use My Location</button>
+        <button type="button" id="favoriteButton" class="secondary-btn">☆ Save Favorite</button>
+      </form>
     </header>
 
-    <main class="dashboard">
-      <section class="utility-row">
-  <div class="utility-card">
-    <p class="section-label">Favorite City</p>
-    <div id="favoriteCity" class="utility-list empty-inline">No favorite saved yet.</div>
-  </div>
-
-  <div class="utility-card">
-    <p class="section-label">Recent Cities</p>
-    <div id="recentCities" class="utility-list empty-inline">No recent cities yet.</div>
-  </div>
-
-  <div class="utility-card settings-card">
-    <p class="section-label">Settings</p>
-    <div class="settings-row">
-      <span>Temperature Unit</span>
-      <div class="toggle-group">
-        <button type="button" id="celsiusBtn" class="toggle-btn active">°C</button>
-        <button type="button" id="fahrenheitBtn" class="toggle-btn">°F</button>
+    <section class="utility-row">
+      <div class="utility-card">
+        <p class="section-label">Favorite City</p>
+        <div id="favoriteCity" class="utility-list empty-inline">No favorite saved yet.</div>
       </div>
-    </div>
-  </div>
-</section>
+
+      <div class="utility-card">
+        <p class="section-label">Recent Cities</p>
+        <div id="recentCities" class="utility-list empty-inline">No recent cities yet.</div>
+      </div>
+
+      <div class="utility-card settings-card">
+        <p class="section-label">Settings</p>
+        <div class="settings-row">
+          <span>Temperature Unit</span>
+          <div class="toggle-group">
+            <button type="button" id="celsiusBtn" class="toggle-btn active">°C</button>
+            <button type="button" id="fahrenheitBtn" class="toggle-btn">°F</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="dashboard">
       <section class="card current-card">
         <div class="card-top">
           <div>
@@ -60,7 +61,7 @@
 
         <div class="current-content">
           <div class="temp-block">
-            <div class="big-temp" id="currentTemp">--°C</div>
+            <div class="big-temp" id="currentTemp">--°</div>
             <div class="weather-icon" id="currentIcon">☀️</div>
           </div>
 
@@ -94,6 +95,11 @@
         </div>
 
         <div id="scene" class="scene summer">
+          <div class="sky-layer">
+            <div id="sunOrMoon" class="sun-or-moon">☀️</div>
+            <div id="cloudLayer" class="cloud-layer"></div>
+          </div>
+
           <div class="sky-overlay"></div>
           <div id="sceneEffects" class="scene-effects"></div>
           <div class="ground"></div>
@@ -120,11 +126,10 @@
                 <span class="belly"></span>
                 <span class="leg left"></span>
                 <span class="leg right"></span>
-
                 <div id="outfitLayer" class="outfit summer-outfit"></div>
               </div>
 
-              <div id="propLayer" class="prop-layer summer-prop">🍦</div>
+              <div id="propLayer" class="prop-layer">🍦</div>
             </div>
           </div>
         </div>
