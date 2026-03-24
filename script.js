@@ -70,8 +70,8 @@ function formatTemp(valueC) {
 }
 
 function setUnitButtons() {
-  celsiusBtn.classList.toggle("active", tempUnit === "c");
-  fahrenheitBtn.classList.toggle("active", tempUnit === "f");
+  if (celsiusBtn) celsiusBtn.classList.toggle("active", tempUnit === "c");
+  if (fahrenheitBtn) fahrenheitBtn.classList.toggle("active", tempUnit === "f");
 }
 
 function getSeason(monthIndex) {
@@ -167,6 +167,8 @@ function getSceneState({ weatherCode, temperature, windSpeed, monthIndex, night 
 }
 
 function renderEffects(type) {
+  if (!sceneEffects) return;
+
   sceneEffects.innerHTML = "";
 
   const createItem = (char, className, count) => {
@@ -189,6 +191,8 @@ function renderEffects(type) {
 }
 
 function renderClouds(showClouds) {
+  if (!cloudLayer) return;
+
   cloudLayer.innerHTML = "";
   if (!showClouds) return;
 
@@ -204,11 +208,22 @@ function renderClouds(showClouds) {
 }
 
 function applyTeddyScene(sceneState) {
-  scene.className = `scene ${sceneState.sceneClass}${sceneState.night ? " night" : ""}`;
-  outfitLayer.className = `outfit ${sceneState.outfitClass}`;
-  propLayer.textContent = sceneState.prop;
-  sceneLabel.textContent = sceneState.label + (sceneState.night ? " • Night" : " • Day");
-  sunOrMoon.textContent = sceneState.skyIcon;
+  if (scene) {
+    scene.className = `scene ${sceneState.sceneClass}${sceneState.night ? " night" : ""}`;
+  }
+  if (outfitLayer) {
+    outfitLayer.className = `outfit ${sceneState.outfitClass}`;
+  }
+  if (propLayer) {
+    propLayer.textContent = sceneState.prop;
+  }
+  if (sceneLabel) {
+    sceneLabel.textContent = sceneState.label + (sceneState.night ? " • Night" : " • Day");
+  }
+  if (sunOrMoon) {
+    sunOrMoon.textContent = sceneState.skyIcon;
+  }
+
   renderClouds(sceneState.clouds);
   renderEffects(sceneState.effect);
 }
@@ -275,6 +290,8 @@ function previewDay(dayIndex) {
 }
 
 function renderHourly(data) {
+  if (!hourlyForecast) return;
+
   hourlyForecast.innerHTML = "";
   const todayDate = data.hourly.time[0].split("T")[0];
 
@@ -309,6 +326,8 @@ function renderHourly(data) {
 }
 
 function renderDaily(data) {
+  if (!dailyForecast) return;
+
   dailyForecast.innerHTML = "";
 
   data.daily.time.forEach((day, index) => {
@@ -348,13 +367,13 @@ function renderCurrent(data, cityName) {
   const sunrise = data.daily.sunrise[0];
   const sunset = data.daily.sunset[0];
 
-  locationName.textContent = cityName;
-  currentTemp.textContent = formatTemp(temp);
-  currentCondition.textContent = info.label;
-  currentIcon.textContent = info.icon;
-  todayHigh.textContent = formatTemp(data.daily.temperature_2m_max[0]);
-  todayLow.textContent = formatTemp(data.daily.temperature_2m_min[0]);
-  currentWind.textContent = `${Math.round(wind)} km/h`;
+  if (locationName) locationName.textContent = cityName;
+  if (currentTemp) currentTemp.textContent = formatTemp(temp);
+  if (currentCondition) currentCondition.textContent = info.label;
+  if (currentIcon) currentIcon.textContent = info.icon;
+  if (todayHigh) todayHigh.textContent = formatTemp(data.daily.temperature_2m_max[0]);
+  if (todayLow) todayLow.textContent = formatTemp(data.daily.temperature_2m_min[0]);
+  if (currentWind) currentWind.textContent = `${Math.round(wind)} km/h`;
 
   const sceneState = getSceneState({
     weatherCode: code,
@@ -368,26 +387,32 @@ function renderCurrent(data, cityName) {
 }
 
 function setLoadingState() {
-  locationName.textContent = "Loading...";
-  currentCondition.textContent = "Fetching weather...";
-  currentTemp.textContent = "--°";
-  currentIcon.textContent = "⏳";
-  todayHigh.textContent = "--";
-  todayLow.textContent = "--";
-  currentWind.textContent = "--";
-  sceneLabel.textContent = "Loading scene...";
-  hourlyForecast.innerHTML = `
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-  `;
-  dailyForecast.innerHTML = `
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-  `;
+  if (locationName) locationName.textContent = "Loading...";
+  if (currentCondition) currentCondition.textContent = "Fetching weather...";
+  if (currentTemp) currentTemp.textContent = "--°";
+  if (currentIcon) currentIcon.textContent = "⏳";
+  if (todayHigh) todayHigh.textContent = "--";
+  if (todayLow) todayLow.textContent = "--";
+  if (currentWind) currentWind.textContent = "--";
+  if (sceneLabel) sceneLabel.textContent = "Loading scene...";
+
+  if (hourlyForecast) {
+    hourlyForecast.innerHTML = `
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    `;
+  }
+
+  if (dailyForecast) {
+    dailyForecast.innerHTML = `
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    `;
+  }
 }
 
 function addRecentCity(city) {
@@ -414,7 +439,7 @@ function renderRecentCities() {
     btn.className = "city-chip";
     btn.textContent = city;
     btn.addEventListener("click", () => {
-      cityInput.value = city;
+      if (cityInput) cityInput.value = city;
       loadWeather(city);
     });
     recentCitiesEl.appendChild(btn);
@@ -440,7 +465,7 @@ function renderFavoriteCity() {
   btn.className = "city-chip";
   btn.textContent = city;
   btn.addEventListener("click", () => {
-    cityInput.value = city;
+    if (cityInput) cityInput.value = city;
     loadWeather(city);
   });
   favoriteCityEl.appendChild(btn);
@@ -491,11 +516,11 @@ async function loadWeather(city) {
     renderHourly(weatherData);
     renderDaily(weatherData);
   } catch (error) {
-    locationName.textContent = "Error";
-    currentCondition.textContent = error.message;
-    currentIcon.textContent = "⚠️";
-    hourlyForecast.innerHTML = `<div class="loading-box">${error.message}</div>`;
-    dailyForecast.innerHTML = "";
+    if (locationName) locationName.textContent = "Error";
+    if (currentCondition) currentCondition.textContent = error.message;
+    if (currentIcon) currentIcon.textContent = "⚠️";
+    if (hourlyForecast) hourlyForecast.innerHTML = `<div class="loading-box">${error.message}</div>`;
+    if (dailyForecast) dailyForecast.innerHTML = "";
   }
 }
 
@@ -513,11 +538,11 @@ async function loadWeatherByCoords(lat, lon, displayName = "Your Location") {
     renderHourly(weatherData);
     renderDaily(weatherData);
   } catch (error) {
-    locationName.textContent = "Error";
-    currentCondition.textContent = error.message;
-    currentIcon.textContent = "⚠️";
-    hourlyForecast.innerHTML = `<div class="loading-box">${error.message}</div>`;
-    dailyForecast.innerHTML = "";
+    if (locationName) locationName.textContent = "Error";
+    if (currentCondition) currentCondition.textContent = error.message;
+    if (currentIcon) currentIcon.textContent = "⚠️";
+    if (hourlyForecast) hourlyForecast.innerHTML = `<div class="loading-box">${error.message}</div>`;
+    if (dailyForecast) dailyForecast.innerHTML = "";
   }
 }
 
@@ -528,20 +553,22 @@ function rerenderAll() {
   renderDaily(latestWeatherData);
 }
 
-searchForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const city = cityInput.value.trim();
-  if (city) loadWeather(city);
-});
+if (searchForm) {
+  searchForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const city = cityInput ? cityInput.value.trim() : "";
+    if (city) loadWeather(city);
+  });
+}
 
 if (geoButton) {
   geoButton.addEventListener("click", () => {
     if (!navigator.geolocation) {
-      currentCondition.textContent = "Geolocation is not supported in this browser.";
+      if (currentCondition) currentCondition.textContent = "Geolocation is not supported in this browser.";
       return;
     }
 
-    currentCondition.textContent = "Getting your location...";
+    if (currentCondition) currentCondition.textContent = "Getting your location...";
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -549,7 +576,7 @@ if (geoButton) {
         loadWeatherByCoords(latitude, longitude, "Your Location");
       },
       () => {
-        currentCondition.textContent = "Unable to get your location.";
+        if (currentCondition) currentCondition.textContent = "Unable to get your location.";
       }
     );
   });
@@ -584,5 +611,5 @@ renderRecentCities();
 renderFavoriteCity();
 
 const savedCity = localStorage.getItem("lastWeatherCity") || "Malmö";
-cityInput.value = savedCity;
+if (cityInput) cityInput.value = savedCity;
 loadWeather(savedCity);
