@@ -400,6 +400,8 @@ function addRecentCity(city) {
 }
 
 function renderRecentCities() {
+  if (!recentCitiesEl) return;
+
   const cities = JSON.parse(localStorage.getItem("recentWeatherCities") || "[]");
   if (!cities.length) {
     recentCitiesEl.innerHTML = `<span class="empty-inline">No recent cities yet.</span>`;
@@ -425,6 +427,8 @@ function saveFavoriteCity(city) {
 }
 
 function renderFavoriteCity() {
+  if (!favoriteCityEl) return;
+
   const city = localStorage.getItem("favoriteWeatherCity");
   if (!city) {
     favoriteCityEl.innerHTML = `<span class="empty-inline">No favorite saved yet.</span>`;
@@ -530,42 +534,50 @@ searchForm.addEventListener("submit", (e) => {
   if (city) loadWeather(city);
 });
 
-geoButton.addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    currentCondition.textContent = "Geolocation is not supported in this browser.";
-    return;
-  }
-
-  currentCondition.textContent = "Getting your location...";
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const { latitude, longitude } = position.coords;
-      loadWeatherByCoords(latitude, longitude, "Your Location");
-    },
-    () => {
-      currentCondition.textContent = "Unable to get your location.";
+if (geoButton) {
+  geoButton.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      currentCondition.textContent = "Geolocation is not supported in this browser.";
+      return;
     }
-  );
-});
 
-favoriteButton.addEventListener("click", () => {
-  if (latestCityName) saveFavoriteCity(latestCityName);
-});
+    currentCondition.textContent = "Getting your location...";
 
-celsiusBtn.addEventListener("click", () => {
-  tempUnit = "c";
-  localStorage.setItem("weatherTempUnit", tempUnit);
-  setUnitButtons();
-  rerenderAll();
-});
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        loadWeatherByCoords(latitude, longitude, "Your Location");
+      },
+      () => {
+        currentCondition.textContent = "Unable to get your location.";
+      }
+    );
+  });
+}
 
-fahrenheitBtn.addEventListener("click", () => {
-  tempUnit = "f";
-  localStorage.setItem("weatherTempUnit", tempUnit);
-  setUnitButtons();
-  rerenderAll();
-});
+if (favoriteButton) {
+  favoriteButton.addEventListener("click", () => {
+    if (latestCityName) saveFavoriteCity(latestCityName);
+  });
+}
+
+if (celsiusBtn) {
+  celsiusBtn.addEventListener("click", () => {
+    tempUnit = "c";
+    localStorage.setItem("weatherTempUnit", tempUnit);
+    setUnitButtons();
+    rerenderAll();
+  });
+}
+
+if (fahrenheitBtn) {
+  fahrenheitBtn.addEventListener("click", () => {
+    tempUnit = "f";
+    localStorage.setItem("weatherTempUnit", tempUnit);
+    setUnitButtons();
+    rerenderAll();
+  });
+}
 
 setUnitButtons();
 renderRecentCities();
